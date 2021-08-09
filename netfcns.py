@@ -53,7 +53,6 @@ def connectcells(cells, ranlist, nclist, pop_by_name, post_type, pre_type, synst
                 
     return ctcons
 
-
 # connects the EC input layer to PC cells
 # read active PCs from pattern file
 # all-to-all connectivity between EC and PC pattern cells
@@ -65,7 +64,6 @@ def connectEC(FPATT, ECPATT, NPATT, synstart, numsyn, cells, pop_by_name, pc):# 
     cue = np.loadtxt(fname = FPATT)
     if (pc.id()==0 and cue.shape != (ECPATT, NPATT) and printflag>1):
         print("The cue data is a different shape than expected:", cue.shape)
-
 
     # find active cells in pattern
     for i in range(len(cue)):
@@ -90,14 +88,13 @@ def connectEC(FPATT, ECPATT, NPATT, synstart, numsyn, cells, pop_by_name, pc):# 
                     ncelist.append(nc)
                     nc.delay = ECDEL
                     nc.weight[0] = ECWGT
+
     return ncelist
                     
-
 # connects the CA3 input layer to output cells (PCs and INs)
 # read PC connections from a file, with connections to
 # a target being a column with index i for target cell i
 # appends the PC NetCons to a List called ncslist
-                    
 def connectCA3(FCONN, C_P, EM_CA3, EN_CA3, cells, pop_by_name, connect_random_low_start_, pc): # {local i, j, cp, gid  localobj src, syn, synN, nc, fc, rs, conns, rc
     cp = C_P    # connection probability
     #mcell_ran4_init(connect_random_low_start_)
@@ -145,9 +142,8 @@ def connectCA3(FCONN, C_P, EM_CA3, EN_CA3, cells, pop_by_name, connect_random_lo
                         nc = h.NetCon(src, synN)
                         nc2 = h.NetCon(src, syn)
     
-    
                     # set up connection from source to target NMDA synapse
-                    #        nc = pc.gid_connect(j+iCA3, synN)
+                    # nc = pc.gid_connect(j+iCA3, synN)
                     ncslist.append(nc)
                     nc.delay = CDEL
                     nc.weight[0] = CNWGT    # NMDA weight same for all connections
@@ -155,22 +151,23 @@ def connectCA3(FCONN, C_P, EM_CA3, EN_CA3, cells, pop_by_name, connect_random_lo
                     
                     ncslist.append(nc2)
                     nc2.delay = CDEL
+                    cell.list_syns.append(nc2)
 
-                    if (conns[i,j] == 1): # TODO access the correct column
+                    if (conns[i,j] == 1):   # TODO access the correct column
                         # set up connection from source to target
-                        #nc = pc.gid_connect(j+iCA3, syn)
+                        # nc = pc.gid_connect(j+iCA3, syn)
                         nc2.weight[0] = CHWGT
                     else:
                         # set up connection from source to target
-                        #nc = pc.gid_connect(j+iCA3, syn)
+                        # nc = pc.gid_connect(j+iCA3, syn)
                         nc2.weight[0] = CLWGT    # unlearned weight
 
     return ncslist
 
 # sets the CA3, EC and Septal background inputs
-def mkinputs(cells, ranlist, pop_by_name, pc): #{local i localobj stim, rs 
-    # Configures the stimulation:
+def mkinputs(cells, ranlist, pop_by_name, pc): # {local i localobj stim, rs 
     
+    # Configures the stimulation:
     for i in range(pop_by_name["CA3Cell"].gidst,pop_by_name["CA3Cell"].gidend+1):
         if (pc.gid_exists(i)):
             cstim = pc.gid2cell(i)        
@@ -293,12 +290,17 @@ def spikerecord(cells, pc):
 # Vectors that record voltages from non-pattern PC
 # Vectors that record voltages from INs
 
-def vrecord(cells,pop_by_name, iPPC, iNPPC, pc):    
+def vrecord(cells, pop_by_name, iPPC, iNPPC, pc, ncell):    
     if (pc.id()==0 and printflag >1):
         print( "Record example voltage traces...")
     results = {}
     for cell in cells:	# loop over possible target cells
         gid = cell.gid	# id of cell
+        if(gid>=ncell):
+            break
+        results["cellv_" + str(cell.gid)] = h.Vector().record(cell.soma(0.5)._ref_v)
+        results["celli_" + str(cell.gid)] = h.Vector().record(cell.pre_list[3]._ref_i)
+        
         if (gid==iPPC):
             results["pvsoma"] = h.Vector().record(cell.soma(0.5)._ref_v)
             results["pvsr"] = h.Vector().record(cell.radTmed(0.5)._ref_v)
@@ -309,6 +311,10 @@ def vrecord(cells,pop_by_name, iPPC, iNPPC, pc):
             results["npvsr"] = h.Vector().record(cell.radTmed(0.5)._ref_v)
             results["npvslm"] = h.Vector().record(cell.lm_thick1(0.5)._ref_v)
 
+        # if (gid<=pop_by_name['PyramidalCell'].gidend):
+        #     results["cellv_" + str(cell.gid)] = h.Vector().record(cell.radTmed(0.5)._ref_v)
+        #     results["celli_" + str(cell.gid)] = h.Vector().record(cell.pre_list[3]._ref_i)
+            
         if (gid==pop_by_name['BasketCell'].gidst):
             results["vBC"] = h.Vector().record(cell.soma(0.5)._ref_v)
             #print("Recording results into vBC from ", cell)
@@ -327,8 +333,12 @@ def vrecord(cells,pop_by_name, iPPC, iNPPC, pc):
 
     return results
 
-def spikeout(cells,fstem,pc):
+def spikeout(cells,fstem,pc,list_clamps,list_deadgids):
     if (pc.id()==0):
+        with open("{}_cell_death.dat".format(fstem), 'w') as f:
+            f.write("number\n")
+            for deadgid in list_deadgids:
+                f.write("{}\n".format(deadgid))
         with open("{}_spt.dat".format(fstem), 'w') as f:
             f.write("time\t cell\n")
             for r in range(len(tvec)):
@@ -341,8 +351,10 @@ def spikeout(cells,fstem,pc):
     pc.barrier()  # wait for all hosts to get to this point
     for rank in range(1,pc.nhost()):
         if (rank==pc.id()):
+            with open("{}_cell_death.dat".format(fstem), 'a') as f:
+                for deadgid in list_deadgids:
+                    f.write("{}\n".format(deadgid))
             with open("{}_spt.dat".format(fstem), 'a') as f:
-
                 for r in range(len(tvec)):
                     f.write("{:.3f}\t{}\n".format(tvec[r], idvec[r]))
 
@@ -350,7 +362,6 @@ def spikeout(cells,fstem,pc):
                 #     if (cell.is_art==0):
                 #         for spk in cell.spike_times:
                 #             f.write("{}\t{}\n".format(spk, cell.gid))
-
     return (tvec, idvec)
 
 def vout(cells,results,fstem, pc): 
@@ -359,8 +370,12 @@ def vout(cells,results,fstem, pc):
         if rank==pc.id():
             for key in results:
                 with open("{}_{}.dat".format(fstem, key), 'w') as f:
-                    for i,v in enumerate(results[key]):
-                        f.write("{:.3f}\t{:.2f}\n".format(i*h.dt,v))
+                    if ("i" in key):
+                        for i,v in enumerate(results[key]):
+                            f.write("{:.3f}\t{:.6f}\n".format(i*h.dt,v))
+                    else:
+                        for i,v in enumerate(results[key]):
+                            f.write("{:.3f}\t{:.2f}\n".format(i*h.dt,v))
         pc.barrier()
 
     return results

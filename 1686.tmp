@@ -1,0 +1,1 @@
+MODOBJFILES= ANsyn.o IA.o Ih.o Kaxon.o Kdend.o Ksoma.o LcaMig.o Naaxon.o Nadend.o Nasoma.o STDPE2Syn.o bgka.o burststim2.o cad.o cagk.o cal.o calH.o car.o cat.o ccanl.o gskch.o h.o hNa.o hha2.o hha_old.o ichan2.o kad.o kap.o kca.o km.o my_exp2syn.o nca.o nmda.o nmda2.o regn_stim.o somacar.o

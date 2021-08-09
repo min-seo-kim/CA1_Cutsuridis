@@ -18,7 +18,6 @@ peak conductance of 1.
 Because the solution is a sum of exponentials, the
 coupled equations can be solved as a pair of independent equations
 by the more efficient cnexp method.
-
 ENDCOMMENT
 
 NEURON {

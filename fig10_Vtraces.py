@@ -12,7 +12,7 @@ from neuron import h
 # Summary diagram for Hippocampus paper
 # BPG 23-1-09
 
-def plot_voltages(simname = 'par', STIME = 200, ETIME = 2050, dt=.025):
+def plot_voltages(simname = 'par', STIME = 200, ETIME = 1550, dt=.025):
     
     plt.figure()
     # ms=8
@@ -56,7 +56,6 @@ def plot_voltages(simname = 'par', STIME = 200, ETIME = 2050, dt=.025):
     ax2 = plt.gca()
     ax2.axes.xaxis.set_ticklabels([])
     
-    
     plt.subplot(nr,1,4);
     FV = 'pyresults/'+ simname +  '_vBSC.dat'   # voltage file
     v = np.loadtxt(FV)  # load spike times
@@ -67,7 +66,6 @@ def plot_voltages(simname = 'par', STIME = 200, ETIME = 2050, dt=.025):
     plt.ylim([VMIN, VMAX+10])
     ax3 = plt.gca()
     ax3.axes.xaxis.set_ticklabels([])
-    
     
     plt.subplot(nr,1,5);
     FV = 'pyresults/'+ simname +  '_vOLM.dat'   # voltage file

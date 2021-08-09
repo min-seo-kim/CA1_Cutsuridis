@@ -1,0 +1,25 @@
+Parameters:
+1. volthresh 
+2. avgvolthresh 
+3. calthresh 
+4. avgcalthresh 
+5. mgconc 
+
+To-Do List:
+1. Implement changing magnesium concentration in main.py -- check
+2. Check if correct voltage is correctly being recorded (soma vs. radTMed) -- check
+3. Check if calcium current is correctly being recorded 
+4. Interpret all membrane potential graphs over time (pattern vs. nonpattern) -- check
+5. Determine correct parameter values for all variables
+6. Fix writing 'guitar_cell_death.dat' -- check
+7. Write cellspike checking algorithm
+8. Change the graphing interface
+
+Anaconda Commands:
+mpiexec -n 8 python main.py "mg_0.0" 0.0
+mpiexec -n 8 python main.py "mg_0.1" 0.1
+mpiexec -n 8 python main.py "mg_0.5" 0.5
+mpiexec -n 8 python main.py "mg_1.0" 1.0
+mpiexec -n 8 python main.py "mg_1.5" 1.5
+mpiexec -n 8 python main.py "mg_2.0" 2.0
+mpiexec -n 8 python main.py "mg_5.0" 5.0

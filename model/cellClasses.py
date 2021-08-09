@@ -22,15 +22,17 @@ class modelcell():
 
 class PyramidalCell(modelcell):
     """ Pyramidal Cell definition """
-    def __init__(self, gid = -1):
+    def __init__(self, gid = -1, mgconc = 1):
         super().__init__()
         self.gid = gid
+        self.mgconc = mgconc
+        self.list_syns = []
         self.create_sections() 
         self.build_topology()
         self.build_subsets() # subsets()
         self.define_geometry() # geom()
         self.define_biophysics() # biophys()
-        self.addSynapses() # synapses
+        # self.addSynapses() # synapses
         
     def __repr__(self):
         return "Pyramidal Cell {}".format(self.gid)
@@ -70,7 +72,6 @@ class PyramidalCell(modelcell):
 
         self.oriprox2.connect(self.soma(1))
         self.oridist2.connect(self.oriprox2(1))
-      
 
     def define_geometry(self):
         for sec in self.all:
@@ -120,8 +121,7 @@ class PyramidalCell(modelcell):
 
         h.pt3dadd(60, -29, 0, 1, sec=self.oridist2)
         h.pt3dadd(105, -59, 0, 1, sec=self.oridist2)
-
-        
+    
         self.soma.L = 10
         self.soma.diam = 10
         self.radTprox.L = 100
@@ -137,7 +137,6 @@ class PyramidalCell(modelcell):
         self.lm_thin2.diam = 1
         self.lm_thick2.L = 100
         self.lm_thick2.diam = 2
-        
         
         self.lm_thick1.L = 100
         self.lm_thick1.diam = 2
@@ -156,7 +155,6 @@ class PyramidalCell(modelcell):
         self.oridist2.L = 200
         self.oridist2.diam = 1.5
 
-
         self.axon.L = 150
         self.axon.diam = 1
  
@@ -168,9 +166,7 @@ class PyramidalCell(modelcell):
         self.all = h.SectionList()
         self.all.wholetree(sec=self.soma)
 
-
     def define_biophysics(self):
-
         gka_soma = 0.0075
         gh_soma = 0.00005
         Rm = 20000    # 28000 Ohm.cm^2 (Migliore value)
@@ -186,28 +182,27 @@ class PyramidalCell(modelcell):
         self.soma.insert("kca") # K(Ca) sAHP potassium type current
         self.soma.insert("mykca") # medium AHP K++ current (BPG)
         self.soma.insert("cad") # calcium pump/buffering mechanism
+        
         for seg in self.soma:
             seg.gnabar_hha2 = 0.007
-            seg.gkbar_hha2  = 0.007/5
-            seg.gl_hha2     = 0
-            seg.el_hha2     = -70
+            seg.gkbar_hha2 = 0.007/5
+            seg.gl_hha2 = 0
+            seg.el_hha2 = -70
             seg.g_pas =  1/Rm
 
             seg.ghdbar_h = gh_soma
             seg.vhalfl_h = -73
             
-            seg.gkabar_kap = gka_soma        # 0.0075
-            seg.gbar_km    = 0.06
+            seg.gkabar_kap = gka_soma # 0.0075
+            seg.gbar_km = 0.06
             seg.gcalbar_cal = 0.0014/2
             seg.gcatbar_cat = 0.0001/2
             seg.gcabar_somacar = 0.0003
             seg.gbar_kca = 5*0.0001
             seg.gkbar_mykca = 0.09075
-
-          
   
-  # //        insert hNa            // h current according to Poirazi 2003
-  # //        gbar_h  = 0.000043        // anything above 0.000043 gives hyperpolarizing oscillations
+  # //        insert hNa              // h current according to Poirazi 2003
+  # //        gbar_h  = 0.000043      // anything above 0.000043 gives hyperpolarizing oscillations
   # //        gbar_h  = 1.872e-5        
   # //        K_h     = 8.8
   # //        vhalf_h = -82
@@ -224,26 +219,27 @@ class PyramidalCell(modelcell):
         self.radTprox.insert("kad") # Inserting A-current
         self.radTprox.insert("hha_old") # HH mechanism with high threshold for Na spikes (-50 mV)
         self.radTprox.insert("pas") # passive
+        
         for seg in self.radTprox:
             seg.ghdbar_h = 2*gh_soma # 0.000005    
             seg.vhalfl_h = -81
             seg.gcabar_car = 0.1*0.0003
-            seg.gcalbar_calH = 0.1*0.00031635    # varies from .1*0.00031635 to 4.6*0.00031635 as distance increases
+            seg.gcalbar_calH = 0.1*0.00031635 # varies from .1*0.00031635 to 4.6*0.00031635 as distance increases
             seg.gcatbar_cat = 0.0001
-            seg.gbar_kca = 5*0.0001        # varies depending on distance from 0.5*0.0001 to 5*0.0001
+            seg.gbar_kca = 5*0.0001 # varies depending on distance from 0.5*0.0001 to 5*0.0001
             seg.gkbar_mykca = 2*0.0165
-            seg.gbar_km = 0.06        # varies with distance (see Poirazzi et al. 2003 cell-setup.hoc file)
-            seg.gkabar_kap = 2*gka_soma        # 0.0075
+            seg.gbar_km = 0.06 # varies with distance (see Poirazzi et al. 2003 cell-setup.hoc file)
+            seg.gkabar_kap = 2*gka_soma # 0.0075
             seg.gkabar_kad = 0
             seg.gnabar_hha_old = 0.007
-            seg.gkbar_hha_old  = 0.007/8.065
-            seg.el_hha_old     = -70
+            seg.gkbar_hha_old = 0.007/8.065
+            seg.el_hha_old = -70
         
-# //        insert hNa            // h current according to Poirazi 2003
-# //              gbar_h  = 0.000043        // anything above 0.000043 gives hyperpolarizing oscillations
-# //             gbar_h  = 1.872e-5        
-# //                K_h     = 8.8
-# //                vhalf_h = -82
+  # //        insert hNa             // h current according to Poirazi 2003
+  # //        gbar_h  = 0.000043     // anything above 0.000043 gives hyperpolarizing oscillations
+  # //        gbar_h  = 1.872e-5        
+  # //        K_h     = 8.8
+  # //        vhalf_h = -82
 
         self.radTmed.insert("h") # h current according to Migliore et al. 2004
         self.radTmed.insert("car") # HVAm Ca++-R type current
@@ -259,26 +255,25 @@ class PyramidalCell(modelcell):
         self.radTmed.insert("pas") # leak conductance
         
         for seg in self.radTmed:
-            seg.ghdbar_h = 4*gh_soma            # 0.000005                    
+            seg.ghdbar_h = 4*gh_soma # 0.000005                    
             seg.vhalfl_h = -81
             seg.gcabar_car = 0.1*0.0003
-            seg.gcalbar_calH = 10*0.00031635    # 4.6*0.00031635 varies from .1*0.00031635 to 4.6*0.00031635 as distance increases
-            seg.gcatbar_cat = 0.0001        # 0.0001
-            seg.gbar_kca = 5*0.0001        # varies depending on distance from 0.5*0.0001 to 5*0.0001
+            seg.gcalbar_calH = 10*0.00031635 # 4.6*0.00031635 varies from .1*0.00031635 to 4.6*0.00031635 as distance increases
+            seg.gcatbar_cat = 0.0001 # 0.0001
+            seg.gbar_kca = 5*0.0001 # varies depending on distance from 0.5*0.0001 to 5*0.0001
             seg.gkbar_mykca = 2*0.0165
-            seg.gbar_km = 0.06            # varies with distance (see Poirazzi et al. 2003 cell-setup.hoc file)
+            seg.gbar_km = 0.06 # varies with distance (see Poirazzi et al. 2003 cell-setup.hoc file)
             seg.gkabar_kap = 0
             seg.gkabar_kad = 4*gka_soma
             seg.gnabar_hha_old = 0.007
-            seg.gkbar_hha_old  = 0.007/8.065
-            seg.el_hha_old     = -70
+            seg.gkbar_hha_old = 0.007/8.065
+            seg.el_hha_old = -70
             
-# //        insert hNa            // h current according to Poirazi 2003
-# //              gbar_h  = 0.000043        
-# //             gbar_h  = 1.872e-5        
-# //                K_h     = 8.8
-# //                vhalf_h = -82
-
+  # //        insert hNa              // h current according to Poirazi 2003
+  # //        gbar_h  = 0.000043        
+  # //        gbar_h  = 1.872e-5        
+  # //        K_h     = 8.8
+  # //        vhalf_h = -82
 
         self.radTdist.insert("h") # h current according to Migliore et al. 2004
         self.radTdist.insert("car") # HVAm Ca++-R type current
@@ -294,21 +289,19 @@ class PyramidalCell(modelcell):
         self.radTdist.insert("pas") # leak conductance
         
         for seg in self.radTdist:
-            seg.ghdbar_h = 7*gh_soma            # 0.000005                    
+            seg.ghdbar_h = 7*gh_soma # 0.000005                    
             seg.vhalfl_h = -81
             seg.gcabar_car = 0.1*0.0003
-            seg.gcalbar_calH = 10*0.00031635    # 4.6*0.00031635 varies from .1*0.00031635 to 4.6*0.00031635 as distance increases
-            seg.gcatbar_cat = 0.0001        # 0.0001
-            seg.gbar_kca = 0.5*0.0001        # varies depending on distance from 0.5*0.0001 to 5*0.0001
+            seg.gcalbar_calH = 10*0.00031635 # 4.6*0.00031635 varies from .1*0.00031635 to 4.6*0.00031635 as distance increases
+            seg.gcatbar_cat = 0.0001 # 0.0001
+            seg.gbar_kca = 0.5*0.0001 # varies depending on distance from 0.5*0.0001 to 5*0.0001
             seg.gkbar_mykca = 0.25*0.0165
-            seg.gbar_km = 0.06            # varies with distance (see Poirazzi et al. 2003 cell-setup.hoc file)
+            seg.gbar_km = 0.06 # varies with distance (see Poirazzi et al. 2003 cell-setup.hoc file)
             seg.gkabar_kap = 0
             seg.gkabar_kad = 6*gka_soma
             seg.gnabar_hha_old = 0.007
-            seg.gkbar_hha_old  = 0.007/8.065
+            seg.gkbar_hha_old = 0.007/8.065
             seg.el_hha_old = -70
-
-
 
         self.lm_thick2.insert("kad") 
         self.lm_thick2.insert("hha_old") # // HH mechanism with high threshold for Na spikes (-50 mV)
@@ -321,7 +314,6 @@ class PyramidalCell(modelcell):
             seg.el_hha_old = -70
             seg.g_pas = 1/200000
 
-
         self.lm_medium2.insert("kad") 
         self.lm_medium2.insert("hha_old") # // HH mechanism with high threshold for Na spikes (-50 mV)
         self.lm_medium2.insert("pas") # leak conductance
@@ -332,7 +324,6 @@ class PyramidalCell(modelcell):
             seg.gkbar_hha_old  = 0.007/8.065
             seg.el_hha_old = -70
             seg.g_pas = 1/200000
-
 
         self.lm_thin2.insert("kad") 
         self.lm_thin2.insert("hha_old") # // HH mechanism with high threshold for Na spikes (-50 mV)
@@ -345,7 +336,6 @@ class PyramidalCell(modelcell):
             seg.el_hha_old = -70
             seg.g_pas = 1/200000
 
-
         self.lm_thick1.insert("kad") 
         self.lm_thick1.insert("hha_old") # // HH mechanism with high threshold for Na spikes (-50 mV)
         self.lm_thick1.insert("pas") # leak conductance
@@ -356,7 +346,6 @@ class PyramidalCell(modelcell):
             seg.gkbar_hha_old  = 0.007/8.065
             seg.el_hha_old = -70
             seg.g_pas = 1/200000
-
 
         self.lm_medium1.insert("kad") 
         self.lm_medium1.insert("hha_old") # // HH mechanism with high threshold for Na spikes (-50 mV)
@@ -369,7 +358,6 @@ class PyramidalCell(modelcell):
             seg.el_hha_old = -70
             seg.g_pas = 1/200000
 
-
         self.lm_thin1.insert("kad") 
         self.lm_thin1.insert("hha_old") # // HH mechanism with high threshold for Na spikes (-50 mV)
         self.lm_thin1.insert("pas") # leak conductance
@@ -380,8 +368,6 @@ class PyramidalCell(modelcell):
             seg.gkbar_hha_old  = 0.007/8.065
             seg.el_hha_old = -70
             seg.g_pas = 1/200000
-
-
 
         self.oriprox1.insert("h") # h current according to Migliore et al. 2004
         self.oriprox1.insert("car") # HVAm Ca++-R type current
@@ -397,21 +383,20 @@ class PyramidalCell(modelcell):
         self.oriprox1.insert("pas") # leak conductance
         
         for seg in self.oriprox1:
-            seg.ghdbar_h = gh_soma            # 0.000005                    
+            seg.ghdbar_h = gh_soma # 0.000005                    
             seg.vhalfl_h = -81
             seg.gcabar_car = 0.1*0.0003
             seg.gcalbar_calH = 0.1*0.00031635 # 4.6*0.00031635 varies from .1*0.00031635 to 4.6*0.00031635 as distance increases
-            seg.gcatbar_cat = 0.0001        # 0.0001
-            seg.gbar_kca = 5*0.0001        # varies depending on distance from 0.5*0.0001 to 5*0.0001
+            seg.gcatbar_cat = 0.0001 # 0.0001
+            seg.gbar_kca = 5*0.0001 # varies depending on distance from 0.5*0.0001 to 5*0.0001
             seg.gkbar_mykca = 2*0.0165
-            seg.gbar_km = 0.06            # varies with distance (see Poirazzi et al. 2003 cell-setup.hoc file)
+            seg.gbar_km = 0.06 # varies with distance (see Poirazzi et al. 2003 cell-setup.hoc file)
             seg.gkabar_kap = gka_soma
             seg.gkabar_kad = 0
             seg.gnabar_hha_old = 0.007
-            seg.gkbar_hha_old  = 0.007/8.065
-            seg.el_hha_old     = -70
+            seg.gkbar_hha_old = 0.007/8.065
+            seg.el_hha_old = -70
             
-
         self.oriprox2.insert("h") # h current according to Migliore et al. 2004
         self.oriprox2.insert("car") # HVAm Ca++-R type current
         self.oriprox2.insert("calH") # HVA L-type Ca2+ channel used in distal dendrites to account for distally restricted initiation of Ca2+ spikes
@@ -426,20 +411,19 @@ class PyramidalCell(modelcell):
         self.oriprox2.insert("pas") # leak conductance
         
         for seg in self.oriprox2:
-            seg.ghdbar_h = gh_soma            # 0.000005                    
+            seg.ghdbar_h = gh_soma # 0.000005                    
             seg.vhalfl_h = -81
             seg.gcabar_car = 0.1*0.0003
             seg.gcalbar_calH = 0.1*0.00031635 # 4.6*0.00031635 varies from .1*0.00031635 to 4.6*0.00031635 as distance increases
-            seg.gcatbar_cat = 0.0001        # 0.0001
-            seg.gbar_kca = 5*0.0001        # varies depending on distance from 0.5*0.0001 to 5*0.0001
+            seg.gcatbar_cat = 0.0001 # 0.0001
+            seg.gbar_kca = 5*0.0001 # varies depending on distance from 0.5*0.0001 to 5*0.0001
             seg.gkbar_mykca = 2*0.0165
-            seg.gbar_km = 0.06            # varies with distance (see Poirazzi et al. 2003 cell-setup.hoc file)
+            seg.gbar_km = 0.06 # varies with distance (see Poirazzi et al. 2003 cell-setup.hoc file)
             seg.gkabar_kap = 0.0075
             seg.gkabar_kad = 0
             seg.gnabar_hha_old = 0.007
-            seg.gkbar_hha_old  = 0.007/8.065
-            seg.el_hha_old     = -70
-
+            seg.gkbar_hha_old = 0.007/8.065
+            seg.el_hha_old = -70
 
         self.oridist1.insert("h") # h current according to Migliore et al. 2004
         self.oridist1.insert("car") # HVAm Ca++-R type current
@@ -455,19 +439,19 @@ class PyramidalCell(modelcell):
         self.oridist1.insert("pas") # leak conductance
         
         for seg in self.oridist1:
-            seg.ghdbar_h = 2*gh_soma            # 0.000005                    
+            seg.ghdbar_h = 2*gh_soma # 0.000005                    
             seg.vhalfl_h = -81
             seg.gcabar_car = 0.1*0.0003
             seg.gcalbar_calH = 0.1*0.00031635 # 4.6*0.00031635 varies from .1*0.00031635 to 4.6*0.00031635 as distance increases
-            seg.gcatbar_cat = 0.0001        # 0.0001
-            seg.gbar_kca = 5*0.0001        # varies depending on distance from 0.5*0.0001 to 5*0.0001
+            seg.gcatbar_cat = 0.0001 # 0.0001
+            seg.gbar_kca = 5*0.0001 # varies depending on distance from 0.5*0.0001 to 5*0.0001
             seg.gkbar_mykca = 2*0.0165
-            seg.gbar_km = 0.06            # varies with distance (see Poirazzi et al. 2003 cell-setup.hoc file)
+            seg.gbar_km = 0.06 # varies with distance (see Poirazzi et al. 2003 cell-setup.hoc file)
             seg.gkabar_kap = gka_soma
             seg.gkabar_kad = 0
             seg.gnabar_hha_old = 0.007
-            seg.gkbar_hha_old  = 0.007/8.065
-            seg.el_hha_old     = -70
+            seg.gkbar_hha_old = 0.007/8.065
+            seg.el_hha_old = -70
 
         self.oridist2.insert("h") # h current according to Migliore et al. 2004
         self.oridist2.insert("car") # HVAm Ca++-R type current
@@ -483,53 +467,47 @@ class PyramidalCell(modelcell):
         self.oridist2.insert("pas") # leak conductance
         
         for seg in self.oridist2:
-            seg.ghdbar_h = 2*gh_soma            # 0.000005                    
+            seg.ghdbar_h = 2*gh_soma # 0.000005                    
             seg.vhalfl_h = -81
             seg.gcabar_car = 0.1*0.0003
             seg.gcalbar_calH = 0.1*0.00031635 # 4.6*0.00031635 varies from .1*0.00031635 to 4.6*0.00031635 as distance increases
-            seg.gcatbar_cat = 0.0001        # 0.0001
-            seg.gbar_kca = 5*0.0001        # varies depending on distance from 0.5*0.0001 to 5*0.0001
+            seg.gcatbar_cat = 0.0001 # 0.0001
+            seg.gbar_kca = 5*0.0001 # varies depending on distance from 0.5*0.0001 to 5*0.0001
             seg.gkbar_mykca = 2*0.0165
-            seg.gbar_km = 0.06            # varies with distance (see Poirazzi et al. 2003 cell-setup.hoc file)
+            seg.gbar_km = 0.06 # varies with distance (see Poirazzi et al. 2003 cell-setup.hoc file)
             seg.gkabar_kap = 0.0075
             seg.gkabar_kad = 0
             seg.gnabar_hha_old = 0.007
-            seg.gkbar_hha_old  = 0.007/8.065
-            seg.el_hha_old     = -70
-
-
+            seg.gkbar_hha_old = 0.007/8.065
+            seg.el_hha_old = -70
 
         self.axon.insert("km") 
         self.axon.insert("hha2") # // HH mechanism with high threshold for Na spikes (-50 mV)
         self.axon.insert("pas") # leak conductance
         
         for seg in self.axon:
-            seg.gbar_km     = 0.5*0.06
+            seg.gbar_km = 0.5*0.06
             seg.gnabar_hha2 = 0.1
-            seg.gkbar_hha2  = 0.1/5
+            seg.gkbar_hha2 = 0.1/5
             seg.gl_hha2 = 0
             seg.el_hha2 = -70
             seg.g_pas = 1/Rm
 
-
         for sec in self.all:
             # self.cm = Not setting cm
-            sec.Ra = 150            # 31.3 +/- 10.9
+            sec.Ra = 150 # 31.3 +/- 10.9
             sec.cm = 1
             sec.ena = 50
             sec.e_pas = -70
             sec.g_pas = 1/Rm # crucial parameter for backpropagating action potential spiking of PCs
             sec.ek = -80
-            
 
-
-    def connect2target(self,target, delay = 1, weight=0.04): # { localobj nc #$o1 target point process, optional $o2 returned NetCon
+    def connect2target(self, target, delay = 1, weight=0.04): # { localobj nc #$o1 target point process, optional $o2 returned NetCon
         self.nc.append(h.NetCon(self.soma(0.5)._ref_v, target, sec=self.soma))
         self.nc[-1].threshold = -10 # mV
         self.nc[-1].delay = delay # ms
         self.nc[-1].weight[0] = weight # NetCon weight is a vector    
         return self.nc[-1]
-
 
     def addSynapses(self):
         self.pre_list = []
@@ -538,7 +516,6 @@ class PyramidalCell(modelcell):
         syn_ = h.MyExp2Syn(self.lm_thick1(0.5))
         self.pre_list.append(syn_)    # AMPA        EC
         syn_.tau1 = 0.5
-        syn_.tau2 = 3
         syn_.e = 0
         
         # E1
@@ -556,11 +533,13 @@ class PyramidalCell(modelcell):
         syn_.e = 0
 
         # E3
-        syn_ = h.NMDA(self.radTmed(0.5))
+        syn_ = h.NMDA2(self.radTmed(0.5))
         self.pre_list.append(syn_)    # NMDA        CA3 Shaffer collateral
-        syn_.tcon = 2.3    
-        syn_.tcoff = 100
-        syn_.gNMDAmax = 1    # use connection weight to determine max cond
+        syn_.gmax = 0.00065
+        syn_.mg = self.mgconc
+        # syn_.tcon = 2.3    
+        # syn_.tcoff = 100
+        # syn_.gNMDAmax = 1    # use connection weight to determine max cond
 
         # E4
         syn_ = h.MyExp2Syn(self.radTprox(0.5))
@@ -624,7 +603,6 @@ class PyramidalCell(modelcell):
         syn_.tau1 = 1
         syn_.tau2 = 8
         syn_.e = -75
-
         
         # I13
         syn_ = h.MyExp2Syn(self.radTmed(0.6))
@@ -654,14 +632,12 @@ class PyramidalCell(modelcell):
         syn_.tau2 = 8
         syn_.e = -75
 
-                
         # I17
         syn_ = h.MyExp2Syn(self.radTmed(0.8))
         self.pre_list.append(syn_)    # GABA-B    Bistratified
         syn_.tau1 = 35
         syn_.tau2 = 100
         syn_.e = -75
-        
                 
         # I18
         syn_ = h.MyExp2Syn(self.radTmed(0.7))
@@ -669,7 +645,6 @@ class PyramidalCell(modelcell):
         syn_.tau1 = 35
         syn_.tau2 = 100
         syn_.e = -75
-        
                 
         # I19
         syn_ = h.MyExp2Syn(self.radTmed(0.6))
@@ -685,7 +660,6 @@ class PyramidalCell(modelcell):
         syn_.tau2 = 100
         syn_.e = -75
 
-                
         # I21
         syn_ = h.MyExp2Syn(self.radTmed(0.3))
         self.pre_list.append(syn_)    # GABA-B    Bistratified
@@ -699,9 +673,8 @@ class PyramidalCell(modelcell):
         syn_.tau1 = 35
         syn_.tau2 = 100
         syn_.e = -75
-
-                
-        # I23
+        
+        # E23
         syn_ = h.STDPE2(self.radTmed(0.5))
         self.pre_list.append(syn_)    # AMPA modifiable	CA3 Schaffer collaterals
         syn_.tau1 = 0.5
@@ -720,7 +693,6 @@ class OLMCell(modelcell):
         self.define_biophysics() # biophys()
         self.addSynapses() # synapses
 
-        
     def __repr__(self):
         return "OLM Cell {}".format(self.gid)
 
@@ -766,7 +738,6 @@ class OLMCell(modelcell):
         self.all = h.SectionList()
         self.all.wholetree(sec=self.soma)
 
-
     def define_biophysics(self):
         self.Rm = 20000 # 1/5e-05    
 
@@ -806,7 +777,6 @@ class OLMCell(modelcell):
             seg.gl_Nadend = 1/self.Rm
             seg.el_Nadend = -70
 
-
         self.axon.insert("Kaxon")
         self.axon.insert("Naaxon")
         for seg in self.axon:
@@ -819,14 +789,12 @@ class OLMCell(modelcell):
             sec.Ra = 150
             sec.cm = 1.3
 
-
-    def connect2target(self,target, delay = 1, weight=0.04): # { localobj nc #$o1 target point process, optional $o2 returned NetCon
+    def connect2target(self, target, delay = 1, weight=0.04): # { localobj nc #$o1 target point process, optional $o2 returned NetCon
         self.nc.append(h.NetCon(self.soma(0.5)._ref_v, target, sec=self.soma))
         self.nc[-1].threshold = -10 # mV
         self.nc[-1].delay = delay # ms
         self.nc[-1].weight[0] = weight # NetCon weight is a vector    
         return self.nc[-1]
-
 
     def addSynapses(self):
         self.pre_list = []
@@ -858,7 +826,6 @@ class OLMCell(modelcell):
         syn_.tau1 = 35
         syn_.tau2 = 100
         syn_.e = -75
-
 
 class BasketCell(modelcell):
     """ Basket Cell definition """
@@ -894,8 +861,6 @@ class BasketCell(modelcell):
         self.lmM1 = h.Section(name='lmM1', cell=self)
         self.lmt1 = h.Section(name='lmt1', cell=self)
 
-
-
     def build_topology(self):
         self.radT2.connect(self.soma(1))
         self.radM2.connect(self.radT2(1))
@@ -917,7 +882,6 @@ class BasketCell(modelcell):
 
         self.lmM1.connect(self.radt1(1))
         self.lmt1.connect(self.lmM1(1))
-      
 
     def define_geometry(self):
         for sec in self.all:
@@ -974,7 +938,6 @@ class BasketCell(modelcell):
         h.pt3dadd(75, -59, 0, 1, sec=self.orit2)
         h.pt3dadd(105, -89, 0, 1, sec=self.orit2)
        
-        
         self.soma.L = 20
         self.soma.diam = 10
         self.radT2.L = 100
@@ -1023,9 +986,7 @@ class BasketCell(modelcell):
         self.all = h.SectionList()
         self.all.wholetree(sec=self.soma)
 
-
     def define_biophysics(self):
-
         gna = 0.2
         
         self.soma.insert("ichan2")
@@ -1069,7 +1030,6 @@ class BasketCell(modelcell):
             seg.gkfbar_ichan2 = 0.013  		
             seg.gl_ichan2 = 0.00018
         self.radt1.cm=1.4
-
         
         self.radt2.insert("ichan2")
         for seg in self.radt2:
@@ -1077,7 +1037,6 @@ class BasketCell(modelcell):
             seg.gkfbar_ichan2 = 0.013  		
             seg.gl_ichan2 = 0.00018
         self.radt2.cm=1.4
-
         
         self.radM1.insert("ichan2")
         for seg in self.radM1:
@@ -1092,7 +1051,6 @@ class BasketCell(modelcell):
             seg.gkfbar_ichan2 = 0.013  		
             seg.gl_ichan2 = 0.00018
         self.radM2.cm=1.4
-
         
         self.radT1.insert("ichan2")
         for seg in self.radT1:
@@ -1121,7 +1079,6 @@ class BasketCell(modelcell):
             seg.gkfbar_ichan2 = 0.013  		
             seg.gl_ichan2 = 0.00018
         self.oriT2.cm=1.4
-
         
         self.oriM1.insert("ichan2")
         for seg in self.oriM1:
@@ -1157,11 +1114,9 @@ class BasketCell(modelcell):
                 seg.catau_ccanl = 10		# Time constant for decay of intracellular Ca2+
                 seg.caiinf_ccanl = 5.e-6		# Steady-state intracellular Ca2+ concentration
 
-            
             sec.insert("borgka")
             for seg in sec:
                 seg.gkabar_borgka = 0.00015		# A-type K+ conductance
-
             
             sec.insert("nca") # N-type Ca2+ conductance
             for seg in sec:
@@ -1190,15 +1145,13 @@ class BasketCell(modelcell):
             sec.esk = -90
             sec.el_ichan2 = -60			#-60.06
         self.cao_ccanl = 2
-            
 
-    def connect2target(self,target, delay = 1, weight=0.04): # { localobj nc #$o1 target point process, optional $o2 returned NetCon
+    def connect2target(self, target, delay = 1, weight=0.04): # { localobj nc #$o1 target point process, optional $o2 returned NetCon
         self.nc.append(h.NetCon(self.soma(0.5)._ref_v, target, sec=self.soma))
         self.nc[-1].threshold = -10 # mV
         self.nc[-1].delay = delay # ms
         self.nc[-1].weight[0] = weight # NetCon weight is a vector    
         return self.nc[-1]
-
 
     def addSynapses(self):
         self.pre_list = []
@@ -1294,14 +1247,12 @@ class BasketCell(modelcell):
         syn_.tau2 = 100
         syn_.e = -75
 
-        
         # I13
         syn_ = h.MyExp2Syn(self.oriT2(0.6))
         self.pre_list.append(syn_)    # GABA-B	Septum
         syn_.tau1 = 35
         syn_.tau2 = 100
         syn_.e = -75
-
 
 class AACell(modelcell):
     """ Axo-axonic Cell definition """
@@ -1337,8 +1288,6 @@ class AACell(modelcell):
         self.lmM1 = h.Section(name='lmM1', cell=self)
         self.lmt1 = h.Section(name='lmt1', cell=self)
 
-
-
     def build_topology(self):
         self.radT2.connect(self.soma(1))
         self.radM2.connect(self.radT2(1))
@@ -1360,7 +1309,6 @@ class AACell(modelcell):
 
         self.lmM1.connect(self.radt1(1))
         self.lmt1.connect(self.lmM1(1))
-      
 
     def define_geometry(self):
         for sec in self.all:
@@ -1416,7 +1364,6 @@ class AACell(modelcell):
 
         h.pt3dadd(75, -59, 0, 1, sec=self.orit2)
         h.pt3dadd(105, -89, 0, 1, sec=self.orit2)
-       
         
         self.soma.L = 20
         self.soma.diam = 10
@@ -1466,9 +1413,7 @@ class AACell(modelcell):
         self.all = h.SectionList()
         self.all.wholetree(sec=self.soma)
 
-
     def define_biophysics(self):
-
         gna = 0.15
         
         self.soma.insert("ichan2")
@@ -1512,7 +1457,6 @@ class AACell(modelcell):
             seg.gkfbar_ichan2 = 0.013  		
             seg.gl_ichan2 = 0.00018
         self.radt1.cm=1.4
-
         
         self.radt2.insert("ichan2")
         for seg in self.radt2:
@@ -1520,7 +1464,6 @@ class AACell(modelcell):
             seg.gkfbar_ichan2 = 0.013  		
             seg.gl_ichan2 = 0.00018
         self.radt2.cm=1.4
-
         
         self.radM1.insert("ichan2")
         for seg in self.radM1:
@@ -1535,7 +1478,6 @@ class AACell(modelcell):
             seg.gkfbar_ichan2 = 0.013  		
             seg.gl_ichan2 = 0.00018
         self.radM2.cm=1.4
-
         
         self.radT1.insert("ichan2")
         for seg in self.radT1:
@@ -1565,7 +1507,6 @@ class AACell(modelcell):
             seg.gl_ichan2 = 0.00018
         self.oriT2.cm=1.4
 
-        
         self.oriM1.insert("ichan2")
         for seg in self.oriM1:
             seg.gnatbar_ichan2 = gna  		# original 0.015
@@ -1601,12 +1542,10 @@ class AACell(modelcell):
             for seg in sec:
                 seg.catau_ccanl = 10		# Time constant for decay of intracellular Ca2+
                 seg.caiinf_ccanl = 5.e-6		# Steady-state intracellular Ca2+ concentration
-
             
             sec.insert("borgka")
             for seg in sec:
                 seg.gkabar_borgka = 0.00015		# A-type K+ conductance
-
             
             sec.insert("nca") # N-type Ca2+ conductance
             for seg in sec:
@@ -1632,17 +1571,15 @@ class AACell(modelcell):
             sec.ek = -90
             sec.elca = 130
             sec.esk = -90
-            sec.el_ichan2 = -60			#-60.06
+            sec.el_ichan2 = -60			#-60.0
         self.cao_ccanl = 2
 
-
-    def connect2target(self,target, delay = 1, weight=0.04): # { localobj nc #$o1 target point process, optional $o2 returned NetCon
+    def connect2target(self, target, delay = 1, weight=0.04): # { localobj nc #$o1 target point process, optional $o2 returned NetCon
         self.nc.append(h.NetCon(self.soma(0.5)._ref_v, target, sec=self.soma))
         self.nc[-1].threshold = -10 # mV
         self.nc[-1].delay = delay # ms
         self.nc[-1].weight[0] = weight # NetCon weight is a vector    
         return self.nc[-1]
-
 
     def addSynapses(self):
         self.pre_list = []
@@ -1737,7 +1674,6 @@ class AACell(modelcell):
         syn_.tau1 = 35
         syn_.tau2 = 100
         syn_.e = -75
-
         
         # I13
         syn_ = h.MyExp2Syn(self.oriT2(0.6))
@@ -1792,8 +1728,6 @@ class BistratifiedCell(modelcell):
         self.oriM2.connect(self.oriT2(1))
         self.orit2.connect(self.oriM2(1))
 
-
-
     def define_geometry(self):
         for sec in self.all:
             sec.pt3dclear()
@@ -1836,7 +1770,6 @@ class BistratifiedCell(modelcell):
 
         h.pt3dadd(75, -59, 0, 1, sec=self.orit2)
         h.pt3dadd(105, -89, 0, 1, sec=self.orit2)
-       
         
         self.soma.L = 20
         self.soma.diam = 10
@@ -1867,7 +1800,6 @@ class BistratifiedCell(modelcell):
         self.oriM2.diam = 1.5
         self.orit2.L = 100
         self.orit2.diam = 1
-
         
         for sec in self.all:
             h("lf = lambda_f(100)")
@@ -1877,9 +1809,7 @@ class BistratifiedCell(modelcell):
         self.all = h.SectionList()
         self.all.wholetree(sec=self.soma)
 
-
     def define_biophysics(self):
-
         gna = 0.3
         
         self.soma.insert("ichan2")
@@ -1895,7 +1825,6 @@ class BistratifiedCell(modelcell):
             seg.gkfbar_ichan2 = 0.013  		
             seg.gl_ichan2 = 0.00018
         self.radt1.cm=1.4
-
         
         self.radt2.insert("ichan2")
         for seg in self.radt2:
@@ -1903,7 +1832,6 @@ class BistratifiedCell(modelcell):
             seg.gkfbar_ichan2 = 0.013  		
             seg.gl_ichan2 = 0.00018
         self.radt2.cm=1.4
-
         
         self.radM1.insert("ichan2")
         for seg in self.radM1:
@@ -1918,7 +1846,6 @@ class BistratifiedCell(modelcell):
             seg.gkfbar_ichan2 = 0.013  		
             seg.gl_ichan2 = 0.00018
         self.radM2.cm=1.4
-
         
         self.radT1.insert("ichan2")
         for seg in self.radT1:
@@ -1947,7 +1874,6 @@ class BistratifiedCell(modelcell):
             seg.gkfbar_ichan2 = 0.013  		
             seg.gl_ichan2 = 0.00018
         self.oriT2.cm=1.4
-
         
         self.oriM1.insert("ichan2")
         for seg in self.oriM1:
@@ -1984,13 +1910,11 @@ class BistratifiedCell(modelcell):
             for seg in sec:
                 seg.catau_ccanl = 10		# Time constant for decay of intracellular Ca2+
                 seg.caiinf_ccanl = 5.e-6		# Steady-state intracellular Ca2+ concentration
-
             
             sec.insert("borgka")
             for seg in sec:
                 seg.gkabar_borgka = 0.00015		# A-type K+ conductance
 
-            
             sec.insert("nca") # N-type Ca2+ conductance
             for seg in sec:
                 seg.gncabar_nca = 0.0008   		# check to modify- original 0.004
@@ -2015,17 +1939,15 @@ class BistratifiedCell(modelcell):
             sec.ek = -90
             sec.elca = 130
             sec.esk = -90
-            sec.el_ichan2 = -60			#-60.06
+            sec.el_ichan2 = -60			#-60.06         
         self.cao_ccanl = 2
 
-
-    def connect2target(self,target, delay = 1, weight=0.04): # { localobj nc #$o1 target point process, optional $o2 returned NetCon
+    def connect2target(self, target, delay = 1, weight=0.04): # { localobj nc #$o1 target point process, optional $o2 returned NetCon
         self.nc.append(h.NetCon(self.soma(0.5)._ref_v, target, sec=self.soma))
         self.nc[-1].threshold = -10 # mV
         self.nc[-1].delay = delay # ms
         self.nc[-1].weight[0] = weight # NetCon weight is a vector    
         return self.nc[-1]
-
 
     def addSynapses(self):
         self.pre_list = []
@@ -2120,7 +2042,6 @@ class BistratifiedCell(modelcell):
         syn_.tau1 = 35
         syn_.tau2 = 100
         syn_.e = -75
-
         
         # I13
         syn_ = h.MyExp2Syn(self.oriT2(0.6))
@@ -2135,7 +2056,6 @@ class BurstCell(modelcell):
         super().__init__()
         self.gid = gid
 
-        
         self.is_art =1
         self.ncstim = []
         self.stim = h.BurstStim2()
@@ -2149,14 +2069,11 @@ class BurstCell(modelcell):
     def __repr__(self):
         return "Burst cell {}: {} ms on, {} ms off, intraburst int is {} ms".format(self.gid, self.stim.burstint, self.stim.burstlen, self.stim.interval)
 
-    def connect2target(self,target, delay = 1, weight=0.04): # { localobj nc #$o1 target point process, optional $o2 returned NetCon
+    def connect2target(self, target, delay = 1, weight=0.04): # { localobj nc #$o1 target point process, optional $o2 returned NetCon
         self.ncstim.append(h.NetCon(self.stim, target))
         self.ncstim[-1].delay = delay # ms
         self.ncstim[-1].weight[0] = weight # NetCon weight is a vector    
         return self.ncstim[-1]
-
-
-
 
 class StimCell(modelcell):  
     """ Stim cell with stim attribute that references a RegnStim point process """
@@ -2176,7 +2093,7 @@ class StimCell(modelcell):
     def __repr__(self):
         return "Stim cell {}: ISI is {} ms".format(self.gid, self.stim.interval)
 
-    def connect2target(self,target, delay = 1, weight=0.04): # { localobj nc #$o1 target point process, optional $o2 returned NetCon
+    def connect2target(self, target, delay = 1, weight=0.04): # { localobj nc #$o1 target point process, optional $o2 returned NetCon
         self.ncstim.append(h.NetCon(self.stim, target))
         self.ncstim[-1].delay = delay # ms
         self.ncstim[-1].weight[0] = weight # NetCon weight is a vector    
