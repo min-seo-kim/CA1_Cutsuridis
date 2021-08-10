@@ -55,8 +55,8 @@ percentDeath = .0 # fraction of pyramidal cells to kill off
 
 volthresh = -55
 avgvolthresh = -56
-calthresh = 0.002
-avgcalthresh = 0.002
+calthresh = 0.01
+avgcalthresh = 0.01
 spikethresh = 3
 amountspikes = 0
 mgconc = 0.1
@@ -400,8 +400,10 @@ for x in range(num2pick):
 
 if (pc.id()==0 and percentDeath>0):
     print("List of cells that died:")
+    
 list_clamps=[]
 list_deadgids = []
+# pc.barrier()
 
 for cell2kill in deadlist:
     if (pc.id()==0):
@@ -478,19 +480,19 @@ h('fihw = new FInitializeHandler(2, "midbal()")')
 if (pc.id()==0 and printflag>0):
     print("Now running simulation at scale = ", network_scale, " for time = ", SIMDUR, " with scaleEScon = ", scaleEScon)
 
-StepBy = 50  # ms, how long you want to go until the 
-             # occasional_fcn is run again
-AnotherStepBy = 1
+StepBy = 100 
+AnotherStepBy = 25
 dt = 0.025
 
-def occasional_fcn():
+def checkspikecount():
     # do some stuff here, look at voltages, etc
     for cell in cells: #Check Voltage list, if the cell needs to die.
         # if (cell.gid>pop_by_name['PyramidalCell'].gidend):
-        if (cell.gid>=100*network_scale or cell.gid in list_deadgids):
+        if (h.t<7.5 or cell.gid>=100*network_scale or cell.gid in list_deadgids):
             break
         cell_dies = 0
-        cell_dies = checkifcelldies(np.asarray(results["cellv_" + str(cell.gid)])[int(h.t//h.dt)-300:int(h.t//h.dt),1],volthresh,avgvolthresh)
+        cell_dies = checkifcelldies(np.asarray(results["cellv_" + str(cell.gid)])[int(h.t//h.dt)-300:int(h.t//h.dt):1],volthresh,avgvolthresh)
+        # cell_dies = checkifcelldies(np.asarray(netfcns.idvec), np.asarray(netfcns.tvec))
         
         if cell_dies == 1:
             stimobj = h.IClamp(cell.soma(0.5))
@@ -502,41 +504,28 @@ def occasional_fcn():
     # And then...
     # Deathlists
     # UPDATE percentdeath as well.
-    h.cvode.event(h.t+StepBy, occasional_fcn) # plan to run again in StepBy amount of time
+    h.cvode.event(h.t+StepBy, checkspikecount) # plan to run again in StepBy amount of time
     
-def another_occasional_fcn():
+def checkplasticity():
     for cell in cells:
         # if(cell.gid>pop_by_name['PyramidalCell'].gidend):
-        if (cell.gid>=100*network_scale):
+        if (h.t<2 or cell.gid>=100*network_scale):
             break
         more_Ampa = 0
         more_Ampa = checkAMPAr(0.84*np.asarray(results["celli_" + str(cell.gid)])[int(h.t//h.dt)-75:int(h.t//h.dt):1],calthresh,avgcalthresh)
         
         if more_Ampa == 1:
             for syn in cell.list_syns:
-                syn.weight[0] += 0.00005 
+                syn.weight[0] += 0.0005 # LTP
         if more_Ampa == -1:
             for syn in cell.list_syns:
-                syn.weight[0] -= 0.00001
+                syn.weight[0] -= 0.0001 # LDP
+                # syn.weight[0] = np.max(0, syn.weight[0])
     # TODO not sure weight Model limitation, what if Ca conc is too little?
-    h.cvode.event(h.t+AnotherStepBy, another_occasional_fcn)
+    h.cvode.event(h.t+AnotherStepBy, checkplasticity)
     
-def again_occasional_fcn():
-    for cell in cells:
-        if(cell.gid>= 100*network_scale):
-            break
-        spiking_enough = 0
-        spiking_enough = checkspike(np.asarray(idvec["celli_" + str(cell.gid)])(int(h.t//h.dt)-25))
-        
-        if spiking_enough == 1:
-            stimobj = h.IClamp(cell.soma(0.5))
-            stimobj.delay = 2
-            stimobj.dur = SIMDUR
-            stimobj.amp = -.4    
-            list_clamps.append(stimobj)
-    
-fihw = h.FInitializeHandler(2, occasional_fcn) # run it at the start of the sim
-fihe = h.FInitializeHandler(2, another_occasional_fcn) # run it at the start of the sim
+fih1 = h.FInitializeHandler(2, checkspikecount) # run it at the start of the sim
+fih2 = h.FInitializeHandler(2, checkplasticity) # run it at the start of the sim
 
 def checkifcelldies(V_overtime,volthresh,avgvolthresh):
     mean = np.mean(V_overtime)
@@ -555,14 +544,14 @@ def checkAMPAr(I_overtime,calthresh,avgcalthresh):
     
     if(mini>calthresh): 
         return 1
-    if(mean>avgcalthresh):
+    elif(mean>avgcalthresh):
         return 1
     else:
         return -1
     return 0
 
-def checkspike(spikecount,spikethresh):
-    return -1
+# def checkspike(spikecount,spikethresh):
+#     return -1
 
 if usepar==1:
     prun() # run and print results

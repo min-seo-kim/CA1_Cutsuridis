@@ -2,10 +2,11 @@ import numpy as np
 
 volthresh = -55
 avgvolthresh = -56
-StepBy = 50
+StepBy = 100
 
-for mgconc in [0.0, 0.1, 0.5, 1.0, 1.5, 2.0, 5.0]:
+for mgconc in [0.0, 0.5]:
     fstem = "pyresults/mg_{}".format(mgconc)
+    # fstem = "pyresults/mg_0.5"
     print("Now investigating simulation", fstem)
     for i in range(20):
         v_overtime = np.loadtxt("{}_cellv_{}.dat".format(fstem,i),skiprows=1)
