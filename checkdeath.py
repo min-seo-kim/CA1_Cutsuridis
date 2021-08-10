@@ -6,7 +6,6 @@ StepBy = 100
 
 for mgconc in [0.0, 0.5]:
     fstem = "pyresults/mg_{}".format(mgconc)
-    # fstem = "pyresults/mg_0.5"
     print("Now investigating simulation", fstem)
     for i in range(20):
         v_overtime = np.loadtxt("{}_cellv_{}.dat".format(fstem,i),skiprows=1)
@@ -25,4 +24,3 @@ for mgconc in [0.0, 0.5]:
             else:
                 # print("Cell ", i, " lives at t = ", t)
                 pass
-                

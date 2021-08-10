@@ -53,12 +53,9 @@ netfile = 'N100S20P5'
 electrostim = 0 # 0 = no stimulation, 1 = stimulation according to parameters set farther down in code
 percentDeath = .0 # fraction of pyramidal cells to kill off
 
-volthresh = -55
-avgvolthresh = -56
 calthresh = 0.01
 avgcalthresh = 0.01
 spikethresh = 3
-amountspikes = 0
 mgconc = 0.1
 
 # Check for parameters being passed in via the command line
@@ -484,15 +481,14 @@ StepBy = 100
 AnotherStepBy = 25
 dt = 0.025
 
-def checkspikecount():
+def spikingcount():
     # do some stuff here, look at voltages, etc
     for cell in cells: #Check Voltage list, if the cell needs to die.
         # if (cell.gid>pop_by_name['PyramidalCell'].gidend):
         if (h.t<7.5 or cell.gid>=100*network_scale or cell.gid in list_deadgids):
             break
         cell_dies = 0
-        cell_dies = checkifcelldies(np.asarray(results["cellv_" + str(cell.gid)])[int(h.t//h.dt)-300:int(h.t//h.dt):1],volthresh,avgvolthresh)
-        # cell_dies = checkifcelldies(np.asarray(netfcns.idvec), np.asarray(netfcns.tvec))
+        cell_dies = checkifcelldies(np.asarray(netfcns.idvec),np.asarray(netfcns.tvec),cell.gid,spikethresh)
         
         if cell_dies == 1:
             stimobj = h.IClamp(cell.soma(0.5))
@@ -504,9 +500,9 @@ def checkspikecount():
     # And then...
     # Deathlists
     # UPDATE percentdeath as well.
-    h.cvode.event(h.t+StepBy, checkspikecount) # plan to run again in StepBy amount of time
+    h.cvode.event(h.t+StepBy, spikingcount) # plan to run again in StepBy amount of time
     
-def checkplasticity():
+def synapticplasticity():
     for cell in cells:
         # if(cell.gid>pop_by_name['PyramidalCell'].gidend):
         if (h.t<2 or cell.gid>=100*network_scale):
@@ -522,21 +518,18 @@ def checkplasticity():
                 syn.weight[0] -= 0.0001 # LDP
                 # syn.weight[0] = np.max(0, syn.weight[0])
     # TODO not sure weight Model limitation, what if Ca conc is too little?
-    h.cvode.event(h.t+AnotherStepBy, checkplasticity)
+    h.cvode.event(h.t+AnotherStepBy, synapticplasticity)
     
-fih1 = h.FInitializeHandler(2, checkspikecount) # run it at the start of the sim
-fih2 = h.FInitializeHandler(2, checkplasticity) # run it at the start of the sim
+fih1 = h.FInitializeHandler(2, spikingcount) # run it at the start of the sim
+fih2 = h.FInitializeHandler(2, synapticplasticity) # run it at the start of the sim
 
-def checkifcelldies(V_overtime,volthresh,avgvolthresh):
-    mean = np.mean(V_overtime)
-    mini = np.min(V_overtime)
-    
-    if(mini>volthresh): 
-        return 1
-    if(mean>avgvolthresh):
+def checkifcelldies(idvec,tvec,gid,spikethresh):
+    spike_indexes = np.where(idvec==gid)
+    my_spikes = np.where(tvec[spike_indexes]>(h.t-100))
+
+    if(len(my_spikes)>spikethresh): 
         return 1
     return 0
-    #TODO relative maxima func, set avgthresh numero, set amountspikes number, else condition
     
 def checkAMPAr(I_overtime,calthresh,avgcalthresh):
     mean = -np.mean(I_overtime)
@@ -549,9 +542,6 @@ def checkAMPAr(I_overtime,calthresh,avgcalthresh):
     else:
         return -1
     return 0
-
-# def checkspike(spikecount,spikethresh):
-#     return -1
 
 if usepar==1:
     prun() # run and print results
