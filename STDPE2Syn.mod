@@ -81,23 +81,25 @@ DERIVATIVE state {
 NET_RECEIVE(w (uS), A, tpre (ms)) {
 	INITIAL { A = 0  tpre = -1e9 }
 	if (flag == 0) { : presynaptic spike  (after last post so depress)
-:		printf("entry flag=%g t=%g w=%g A=%g tpre=%g tpost=%g\n", flag, t, w, A, tpre, tpost)
-:		g = g + w + A	: only for single exp (BPG)
+        : printf("entry flag=%g t=%g w=%g A=%g tpre=%g tpost=%g\n", flag, t, w, A, tpre, tpost)
+        : g = g + w + A	: only for single exp (BPG)
 		C = C + (w + A)*factor
 		B = B + (w + A)*factor
 		tpre = t
 		if (on == 1) {
 			A = A * (1 - d*exp((tpost - t)/dtau))
 		}
-	}else if (flag == 2 && on == 1) { : postsynaptic spike
-:		printf("entry flag=%g t=%g tpost=%g\n", flag, t, tpost)
+	}
+	else if (flag == 2 && on == 1) { : postsynaptic spike
+        : printf("entry flag=%g t=%g tpost=%g\n", flag, t, tpost)
 		tpost = t
 		FOR_NETCONS(w1, A1, tp) { : also can hide NET_RECEIVE args
-:			printf("entry FOR_NETCONS w1=%g A1=%g tp=%g\n", w1, A1, tp)
+            : printf("entry FOR_NETCONS w1=%g A1=%g tp=%g\n", w1, A1, tp)
 			A1 = A1 + (wmax-w1-A1)*p*exp((tp - t)/ptau)
 		}
-	} else if (flag == 1) { : flag == 1 from INITIAL block
-:		printf("entry flag=%g t=%g\n", flag, t)
+	} 
+	else if (flag == 1) { : flag == 1 from INITIAL block
+        : printf("entry flag=%g t=%g\n", flag, t)
 		WATCH (v > thresh) 2
 	}
 	else if (flag == 3) { : plasticity control

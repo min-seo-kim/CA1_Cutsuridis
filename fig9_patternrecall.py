@@ -24,8 +24,7 @@ def plot_results(simname,netfile='N100S20P5',NUMCYCLES=numCycles, scaleDown=1):
     
     RTIME = 50+(250*NUMCYCLES)    # run time (msecs)
     STIME = 200
-    ETIME = 2050
-    
+    ETIME = 1550
     
     patts = np.loadtxt(FPATT)   # load stored patterns
     cue = patts[:,CPATT]   # extract cue pattern
@@ -116,7 +115,6 @@ def plot_results(simname,netfile='N100S20P5',NUMCYCLES=numCycles, scaleDown=1):
     plt.ylim([0, NPCELL])
     ax2 = plt.gca()
     ax2.axes.xaxis.set_ticklabels([])
-    
     
     plt.subplot(4,1,4)
     #hold on

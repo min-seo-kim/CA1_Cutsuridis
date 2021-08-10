@@ -1,0 +1,20 @@
+Parameters:
+1. volthresh 
+2. avgvolthresh 
+3. calthresh 
+4. avgcalthresh 
+5. mgconc 
+
+To-Do List:
+1. Check if calcium current is correctly being recorded 
+2. Determine correct parameter values for all variables
+3. Fix cell death algorithm using spikecount 
+4. Change the graphing interface
+
+Anaconda Commands:
+mpiexec -n 8 python main.py "mg_0.0" 0.0
+mpiexec -n 8 python main.py "mg_0.5" 0.5
+mpiexec -n 8 python main.py "mg_1.0" 1.0
+mpiexec -n 8 python main.py "mg_2.0" 2.0
+
+10 Hz = 10 spikes / 1 sec = 10 spikes / 1000 ms = 3 spike / 100 ms
