@@ -491,11 +491,10 @@ def spikingcount():
         cell_dies = checkifcelldies(np.asarray(netfcns.idvec),np.asarray(netfcns.tvec),cell.gid,spikethresh)
         
         if cell_dies == 1:
-            stimobj = h.IClamp(cell.soma(0.5))
-            stimobj.delay = 2
-            stimobj.dur = SIMDUR
-            stimobj.amp = -.4    
-            list_clamps.append(stimobj)
+            cell.stimobj.delay = h.t + 2
+            cell.stimobj.dur = SIMDUR
+            cell.stimobj.amp = -.4    
+            list_clamps.append(cell.stimobj)
             list_deadgids.append(cell.gid)
     # And then...
     # Deathlists
@@ -530,7 +529,7 @@ def synapticdepression():
                 if syn.weight[0] < 0:
                     syn.weight[0] = 0
     # TODO not sure weight Model limitation, what if Ca conc is too little?
-    h.cvode.event(h.t+AnotherStepBy+49, synapticdepression)
+    h.cvode.event(h.t+AnotherStepBy*50, synapticdepression)
     
 fih1 = h.FInitializeHandler(2, spikingcount) # run it at the start of the sim
 fih2 = h.FInitializeHandler(2, synapticpotentiation) # run it at the start of the sim
@@ -540,7 +539,7 @@ def checkifcelldies(idvec,tvec,gid,spikethresh):
     spike_indexes = np.where(idvec==gid)
     my_spikes = np.where(tvec[spike_indexes]>(h.t-100))
 
-    if(len(my_spikes)>spikethresh): 
+    if(len(my_spikes[0])>=spikethresh): 
         return 1
     return 0
     
