@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-for mgconc in [0.0, 0.5, 1.0, 2.0]:
+for mgconc in [0.0, 0.5, 1.0]:
     fstem = "pyresults/mg_{}".format(mgconc)
     spks1 = np.loadtxt("{}_celli_0.dat".format(fstem),skiprows=1)
     spks2 = np.loadtxt("{}_celli_1.dat".format(fstem),skiprows=1)

@@ -477,8 +477,8 @@ h('fihw = new FInitializeHandler(2, "midbal()")')
 if (pc.id()==0 and printflag>0):
     print("Now running simulation at scale = ", network_scale, " for time = ", SIMDUR, " with scaleEScon = ", scaleEScon)
 
-StepBy = 100 
-AnotherStepBy = 25
+StepBy = 50 
+AnotherStepBy = 1
 dt = 0.025
 
 def spikingcount():
@@ -502,7 +502,7 @@ def spikingcount():
     # UPDATE percentdeath as well.
     h.cvode.event(h.t+StepBy, spikingcount) # plan to run again in StepBy amount of time
     
-def synapticplasticity():
+def synapticpotentiation():
     for cell in cells:
         # if(cell.gid>pop_by_name['PyramidalCell'].gidend):
         if (h.t<2 or cell.gid>=100*network_scale):
@@ -512,16 +512,29 @@ def synapticplasticity():
         
         if more_Ampa == 1:
             for syn in cell.list_syns:
-                syn.weight[0] += 0.0005 # LTP
+                syn.weight[0] += 0.00001 # LTP
+    # TODO not sure weight Model limitation, what if Ca conc is too little?
+    h.cvode.event(h.t+AnotherStepBy, synapticpotentiation)
+    
+def synapticdepression():
+    for cell in cells:
+        # if(cell.gid>pop_by_name['PyramidalCell'].gidend):
+        if (h.t<2 or cell.gid>=100*network_scale):
+            break
+        more_Ampa = 0
+        more_Ampa = checkAMPAr(0.84*np.asarray(results["celli_" + str(cell.gid)])[int(h.t//h.dt)-75:int(h.t//h.dt):1],calthresh,avgcalthresh)
+        
         if more_Ampa == -1:
             for syn in cell.list_syns:
-                syn.weight[0] -= 0.0001 # LDP
-                # syn.weight[0] = np.max(0, syn.weight[0])
+                syn.weight[0] -= 0.000008 # LTD
+                if syn.weight[0] < 0:
+                    syn.weight[0] = 0
     # TODO not sure weight Model limitation, what if Ca conc is too little?
-    h.cvode.event(h.t+AnotherStepBy, synapticplasticity)
+    h.cvode.event(h.t+AnotherStepBy+49, synapticdepression)
     
 fih1 = h.FInitializeHandler(2, spikingcount) # run it at the start of the sim
-fih2 = h.FInitializeHandler(2, synapticplasticity) # run it at the start of the sim
+fih2 = h.FInitializeHandler(2, synapticpotentiation) # run it at the start of the sim
+fih3 = h.FInitializeHandler(2, synapticdepression) # run it at the start of the sim
 
 def checkifcelldies(idvec,tvec,gid,spikethresh):
     spike_indexes = np.where(idvec==gid)
