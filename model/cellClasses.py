@@ -32,6 +32,10 @@ class PyramidalCell(modelcell):
         self.build_subsets() # subsets()
         self.define_geometry() # geom()
         self.define_biophysics() # biophys()
+        self.stimobj = h.IClamp(self.soma(0.5))
+        self.stimobj.delay = 1e9
+        self.stimobj.dur = 1
+        self.stimobj.amp = 0  
         # self.addSynapses() # synapses
         
     def __repr__(self):
