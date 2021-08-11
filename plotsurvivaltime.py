@@ -26,7 +26,17 @@ for mgconc in mgconcs:
     for k in range(100-len(pattern_cells)-npcount): nptime += 1550
     pattern_avgtime.append(ptime/len(pattern_cells))
     nonpattern_avgtime.append(nptime/(100-len(pattern_cells)))
+    
+with open('pyresults/mgf_pattern_avgtime.dat', 'w') as f:
+    f.write("mg\t time\n")
+    for r in range(len(pattern_avgtime)):
+        f.write("{}\t {}\n".format(mgconcs[r],pattern_avgtime[r]))
 
+with open('pyresults/mgf_nonpattern_avgtime.dat', 'w') as f:
+    f.write("mg\t time\n")
+    for r in range(len(nonpattern_avgtime)):
+        f.write("{}\t {}\n".format(mgconcs[r],nonpattern_avgtime[r]))
+        
 x = np.arange(len(mgconcs))
 plt.figure(figsize=(12,8))
 plt.plot(x,nonpattern_avgtime,'o-',label='Nonpattern')

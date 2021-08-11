@@ -18,7 +18,17 @@ for mgconc in mgconcs:
         else: npcount += 1
     pattern_count.append(pcount)
     nonpattern_count.append(npcount)
-    
+
+with open('pyresults/mgf_pattern_count.dat', 'w') as f:
+    f.write("mg\t count\n")
+    for r in range(len(pattern_count)):
+        f.write("{}\t {}\n".format(mgconcs[r],pattern_count[r]))
+
+with open('pyresults/mgf_nonpattern_count.dat', 'w') as f:
+    f.write("mg\t count\n")
+    for r in range(len(nonpattern_count)):
+        f.write("{}\t {}\n".format(mgconcs[r],nonpattern_count[r]))
+
 width = 0.35
 x = np.arange(len(mgconcs))
 plt.figure(figsize=(12,8))

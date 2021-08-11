@@ -23,5 +23,4 @@ plt.ylabel('Average Current (nA)')
 plt.legend(loc='upper left')
 plt.title('Average Current vs. Mg Concentration')
 plt.show()
-
     
