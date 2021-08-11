@@ -333,12 +333,12 @@ def vrecord(cells, pop_by_name, iPPC, iNPPC, pc, ncell):
 
     return results
 
-def spikeout(cells,fstem,pc,list_clamps,list_deadgids):
+def spikeout(cells,fstem,pc,list_clamps,list_deadgids,list_deadtimes):
     if (pc.id()==0):
         with open("{}_cell_death.dat".format(fstem), 'w') as f:
-            f.write("number\n")
-            for deadgid in list_deadgids:
-                f.write("{}\n".format(deadgid))
+            f.write("time\t cell\n")
+            for r in range(len(list_deadgids)):
+                f.write("{}\t{}\n".format(list_deadtimes[r],list_deadgids[r]))
         with open("{}_spt.dat".format(fstem), 'w') as f:
             f.write("time\t cell\n")
             for r in range(len(tvec)):
@@ -350,11 +350,11 @@ def spikeout(cells,fstem,pc,list_clamps,list_deadgids):
     
     pc.barrier()  # wait for all hosts to get to this point
     for rank in range(1,pc.nhost()):
-        # pc.barrier()
+        pc.barrier()
         if (rank==pc.id()):
             with open("{}_cell_death.dat".format(fstem), 'a') as f:
-                for deadgid in list_deadgids:
-                    f.write("{}\n".format(deadgid))
+                for r in range(len(list_deadgids)):
+                    f.write("{}\t{}\n".format(list_deadtimes[r],list_deadgids[r]))
             with open("{}_spt.dat".format(fstem), 'a') as f:
                 for r in range(len(tvec)):
                     f.write("{:.3f}\t{}\n".format(tvec[r], idvec[r]))

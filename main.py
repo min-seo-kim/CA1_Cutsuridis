@@ -42,7 +42,7 @@ netfcns.printflag = printflag
 
 # Set default values for parameters that can be passed in at the command line
 plotflag = 0
-network_scale = 0.2 # set to 1 for full scale or 0.2 for a quick test with a small network
+network_scale = 1 # set to 1 for full scale or 0.2 for a quick test with a small network
 scaleEScon = 1 # scaling factor for number of excitatory connections in the network, should be set to 1
 
 numCycles = 6 # set to 2 for a short test network or 8 for a full simulation
@@ -55,8 +55,8 @@ percentDeath = .0 # fraction of pyramidal cells to kill off
 
 calthresh = 0.01
 avgcalthresh = 0.01
-spikethresh = 3
-mgconc = 0.1
+spikethresh = 4
+mgconc = 2.0
 
 # Check for parameters being passed in via the command line
 argadd = 1
@@ -102,6 +102,7 @@ params = {"simname":simname,
           "network_scale":network_scale,
           "SIMDUR":SIMDUR,
           "dt":h.dt,
+          "spikethresh":spikethresh,
           "connect_random_low_start_": connect_random_low_start_,
           "scaleEScon": scaleEScon,
           "electrostim": electrostim,
@@ -400,6 +401,7 @@ if (pc.id()==0 and percentDeath>0):
     
 list_clamps=[]
 list_deadgids = []
+list_deadtimes = []
 # pc.barrier()
 
 for cell2kill in deadlist:
@@ -477,60 +479,72 @@ h('fihw = new FInitializeHandler(2, "midbal()")')
 if (pc.id()==0 and printflag>0):
     print("Now running simulation at scale = ", network_scale, " for time = ", SIMDUR, " with scaleEScon = ", scaleEScon)
 
-StepBy = 50 
-AnotherStepBy = 1
+StepBy = 5
+AnotherStepBy = 10
 dt = 0.025
 
 def spikingcount():
     # do some stuff here, look at voltages, etc
-    for cell in cells: #Check Voltage list, if the cell needs to die.
-        # if (cell.gid>pop_by_name['PyramidalCell'].gidend):
-        if (h.t<7.5 or cell.gid>=100*network_scale or cell.gid in list_deadgids):
-            break
-        cell_dies = 0
-        cell_dies = checkifcelldies(np.asarray(netfcns.idvec),np.asarray(netfcns.tvec),cell.gid,spikethresh)
-        
-        if cell_dies == 1:
-            stimobj = h.IClamp(cell.soma(0.5))
-            stimobj.delay = 2
-            stimobj.dur = SIMDUR
-            stimobj.amp = -.4    
-            list_clamps.append(stimobj)
-            list_deadgids.append(cell.gid)
-    # And then...
-    # Deathlists
-    # UPDATE percentdeath as well.
+    if (h.t>200):
+        for cell in cells: #Check Voltage list, if the cell needs to die.
+            # if (cell.gid>pop_by_name['PyramidalCell'].gidend):
+            if (cell.gid>=100*network_scale or cell.gid in list_deadgids):
+                continue
+            cell_dies = 0
+            cell_dies = checkifcelldies(np.asarray(netfcns.idvec),np.asarray(netfcns.tvec),cell.gid,spikethresh)
+            
+            if cell_dies == 1:
+                cell.stimobj.delay = h.t + 2
+                cell.stimobj.dur = SIMDUR
+                cell.stimobj.amp = -0.8 
+                cell.isdead = 1
+                for seg in cell.soma:
+                    seg.gnabar_hha2 = 0
+                for syn in cell.list_syns:
+                    syn.weight[0] = 0
+                list_clamps.append(cell.stimobj)
+                list_deadgids.append(cell.gid)
+                list_deadtimes.append(round(h.t))
+        # And then...
+        # Deathlists
+        # UPDATE percentdeath as well.
     h.cvode.event(h.t+StepBy, spikingcount) # plan to run again in StepBy amount of time
     
 def synapticpotentiation():
-    for cell in cells:
-        # if(cell.gid>pop_by_name['PyramidalCell'].gidend):
-        if (h.t<2 or cell.gid>=100*network_scale):
-            break
-        more_Ampa = 0
-        more_Ampa = checkAMPAr(0.84*np.asarray(results["celli_" + str(cell.gid)])[int(h.t//h.dt)-75:int(h.t//h.dt):1],calthresh,avgcalthresh)
-        
-        if more_Ampa == 1:
-            for syn in cell.list_syns:
-                syn.weight[0] += 0.00001 # LTP
-    # TODO not sure weight Model limitation, what if Ca conc is too little?
+    if (h.t>2):
+        for cell in cells:
+            # if(cell.gid>pop_by_name['PyramidalCell'].gidend):
+            if (cell.gid>=100*network_scale):
+                continue
+            if (cell.isdead==1):
+                continue
+            more_Ampa = 0
+            more_Ampa = checkAMPAr(0.84*np.asarray(results["celli_" + str(cell.gid)])[int(h.t//h.dt)-75:int(h.t//h.dt):1],calthresh,avgcalthresh)
+            
+            if more_Ampa == 1:
+                for syn in cell.list_syns:
+                    syn.weight[0] += 0.00011 # LTP
+        # TODO not sure weight Model limitation, what if Ca conc is too little?
     h.cvode.event(h.t+AnotherStepBy, synapticpotentiation)
     
 def synapticdepression():
-    for cell in cells:
-        # if(cell.gid>pop_by_name['PyramidalCell'].gidend):
-        if (h.t<2 or cell.gid>=100*network_scale):
-            break
-        more_Ampa = 0
-        more_Ampa = checkAMPAr(0.84*np.asarray(results["celli_" + str(cell.gid)])[int(h.t//h.dt)-75:int(h.t//h.dt):1],calthresh,avgcalthresh)
-        
-        if more_Ampa == -1:
-            for syn in cell.list_syns:
-                syn.weight[0] -= 0.000008 # LTD
-                if syn.weight[0] < 0:
-                    syn.weight[0] = 0
-    # TODO not sure weight Model limitation, what if Ca conc is too little?
-    h.cvode.event(h.t+AnotherStepBy+49, synapticdepression)
+    if (h.t>2):
+        for cell in cells:
+            # if(cell.gid>pop_by_name['PyramidalCell'].gidend):
+            if (cell.gid>=100*network_scale):
+                continue
+            if (cell.isdead==1):
+                continue
+            more_Ampa = 0
+            more_Ampa = checkAMPAr(0.84*np.asarray(results["celli_" + str(cell.gid)])[int(h.t//h.dt)-75:int(h.t//h.dt):1],calthresh,avgcalthresh)
+            
+            if more_Ampa == -1:
+                for syn in cell.list_syns:
+                    syn.weight[0] -= 0.00008 # LTD
+                    if syn.weight[0] < 0:
+                        syn.weight[0] = 0
+        # TODO not sure weight Model limitation, what if Ca conc is too little?
+    h.cvode.event(h.t+AnotherStepBy*50, synapticdepression)
     
 fih1 = h.FInitializeHandler(2, spikingcount) # run it at the start of the sim
 fih2 = h.FInitializeHandler(2, synapticpotentiation) # run it at the start of the sim
@@ -538,9 +552,9 @@ fih3 = h.FInitializeHandler(2, synapticdepression) # run it at the start of the 
 
 def checkifcelldies(idvec,tvec,gid,spikethresh):
     spike_indexes = np.where(idvec==gid)
-    my_spikes = np.where(tvec[spike_indexes]>(h.t-100))
+    my_spikes = np.where(tvec[spike_indexes]>(h.t-80))
 
-    if(len(my_spikes)>spikethresh): 
+    if(len(my_spikes[0])>=spikethresh): 
         return 1
     return 0
     
@@ -562,7 +576,7 @@ else:
     h.run() 
     
 # print out the results
-spikeout = netfcns.spikeout(cells,fstem,pc,list_clamps,list_deadgids)
+spikeout = netfcns.spikeout(cells,fstem,pc,list_clamps,list_deadgids,list_deadtimes)
 vout = netfcns.vout(cells,results,fstem,pc)
 
 if (pc.id()==0 and printflag>0):
