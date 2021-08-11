@@ -2,8 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 pattern_cells = [1,2,7,11,21,28,35,38,39,43,46,49,56,57,59,62,78,81,88,90]
-mgconcs = [0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6]
-# mgconcs = [0.0, 0.4, 0.8, 1.2, 1.6, 2.0] 
 mgconcs = [0.0, 0.5, 1.0, 2.0, 4.0] 
 pattern_avgtime = []
 nonpattern_avgtime = []

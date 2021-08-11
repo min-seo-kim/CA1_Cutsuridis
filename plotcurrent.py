@@ -1,18 +1,27 @@
 import numpy as np
 import matplotlib.pyplot as plt
     
-pattern = [1,2,7,11,21,28,35,38,39,43,46,49,56,57,59,62,78,81,88,90]
-mgconcs = [0.0, 0.5, 1.0, 2.0, 4.0]
-colors = ['r','g','b','c','m','y','k']
+mgconcs = [round(0.2*i,1) for i in list(range(11))]
+nonpattern_avg = []
+pattern_avg= []
 
-for gid in range(100):
-    plt.figure(figsize=(10,8))
-    for i, mgconc in enumerate(mgconcs):
-        spks = np.loadtxt("pyresults/mgf_{}_celli_{}.dat".format(mgconc,gid),skiprows=1)
-        plt.plot(spks[:,0],spks[:,1],color=colors[i],label='Mg = {} mM'.format(mgconc))
-    if gid in pattern: plt.title('Pattern Pyramidal Cell {}'.format(gid))
-    else: plt.title('Nonpattern Pyramidal Cell {}'.format(gid))
-    plt.xlabel('Time (ms)')
-    plt.ylabel('Current (nA)')
-    plt.legend(loc='upper right')
-    plt.show()
+for mgconc in mgconcs: 
+    nonpattern_spks = np.loadtxt("pyresults/mgf_{}_celli_0.dat".format(mgconc),skiprows=1)
+    nonpattern_cot = nonpattern_spks[:,1]
+    nonpattern_avg.append(np.mean(nonpattern_cot))
+    pattern_spks = np.loadtxt("pyresults/mgf_{}_celli_1.dat".format(mgconc),skiprows=1)
+    pattern_cot = pattern_spks[:,1]
+    pattern_avg.append(np.mean(pattern_cot))
+
+x = np.arange(len(mgconcs))
+plt.figure(figsize=(12,10))
+plt.plot(x,nonpattern_avg,'o-',label='Nonpattern')
+plt.plot(x,pattern_avg,'s-',label='Pattern')
+plt.xticks(x,mgconcs)
+plt.xlabel('Magnesium Concentration (mM)')
+plt.ylabel('Average Current (nA)')
+plt.legend(loc='upper left')
+plt.title('Average Current vs. Mg Concentration')
+plt.show()
+
+    
