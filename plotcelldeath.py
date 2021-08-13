@@ -1,3 +1,4 @@
+#%%
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -19,6 +20,7 @@ for mgconc in mgconcs:
     pattern_count.append(pcount)
     nonpattern_count.append(npcount)
 
+#%%
 with open('pyresults/mgf_pattern_count.dat', 'w') as f:
     f.write("mg\t count\n")
     for r in range(len(pattern_count)):
@@ -29,14 +31,16 @@ with open('pyresults/mgf_nonpattern_count.dat', 'w') as f:
     for r in range(len(nonpattern_count)):
         f.write("{}\t {}\n".format(mgconcs[r],nonpattern_count[r]))
 
+#%%
 width = 0.35
 x = np.arange(len(mgconcs))
 plt.figure(figsize=(12,8))
-plt.bar(x-width/2,nonpattern_count,width,label='Nonpattern')
-plt.bar(x+width/2,pattern_count,width,label='Pattern')
-plt.xticks(x,mgconcs)
-plt.xlabel('Magnesium Concentration (mM)')
-plt.ylabel('# of Dead Cells')
-plt.title('Dead Cell Count vs. Mg Concentration')
-plt.legend()
+plt.bar(x-width/2,nonpattern_count,width,color='#2C599D',label='Nonpattern')
+plt.bar(x+width/2,pattern_count,width,color='#F98125',label='Pattern',)
+plt.xticks(x,mgconcs,fontsize='large')
+plt.yticks(fontsize='large')
+plt.xlabel(xlabel='Magnesium Concentration (mM)',fontsize='x-large',fontweight='medium',loc='center',labelpad=14)
+plt.ylabel(ylabel='Number of Dead Cells',fontsize='x-large',fontweight='medium',loc='center',labelpad=14)
+plt.title(label='Dead Cell Count vs. Mg Concentration',fontsize='xx-large',fontweight='roman',loc='center',pad=20)
+plt.legend(loc='upper right',fontsize='large',fancybox=True,edgecolor='0.6')
 plt.show()  

@@ -1,3 +1,4 @@
+#%%
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -26,7 +27,8 @@ for mgconc in mgconcs:
     for k in range(100-len(pattern_cells)-npcount): nptime += 1550
     pattern_avgtime.append(ptime/len(pattern_cells))
     nonpattern_avgtime.append(nptime/(100-len(pattern_cells)))
-    
+
+#%%    
 with open('pyresults/mgf_pattern_avgtime.dat', 'w') as f:
     f.write("mg\t time\n")
     for r in range(len(pattern_avgtime)):
@@ -36,14 +38,17 @@ with open('pyresults/mgf_nonpattern_avgtime.dat', 'w') as f:
     f.write("mg\t time\n")
     for r in range(len(nonpattern_avgtime)):
         f.write("{}\t {}\n".format(mgconcs[r],nonpattern_avgtime[r]))
-        
+
+#%%        
 x = np.arange(len(mgconcs))
 plt.figure(figsize=(12,8))
-plt.plot(x,nonpattern_avgtime,'o-',label='Nonpattern')
-plt.plot(x,pattern_avgtime,'s-',label='Pattern')
-plt.xticks(x,mgconcs)
-plt.xlabel('Magnesium Concentration (mM)')
-plt.ylabel('Average Survival Time (ms)')
-plt.legend(loc='upper left')
-plt.title('Average Survival Time vs. Mg Concentration')
+plt.plot(x,nonpattern_avgtime,c='#2C599D',label='Non-Pattern',ls='-',lw=1.2,marker='s',markersize=6)
+plt.plot(x,pattern_avgtime,c='#F98125',label='Pattern',ls='-',lw=1.2,marker='o',markersize=6)
+plt.xticks(x,mgconcs,fontsize='large')
+plt.yticks(fontsize='large')
+plt.xlabel(xlabel='Magnesium Concentration (mM)',fontsize='x-large',fontweight='medium',loc='center',labelpad=14)
+plt.ylabel(ylabel='Average Survival Time (ms)',fontsize='x-large',fontweight='medium',loc='center',labelpad=14)
+plt.title(label='Average Survival Time vs. Mg Concentration',fontsize='xx-large',fontweight='roman',loc='center',pad=20)
+plt.legend(loc='upper left',fontsize='large',fancybox=True,edgecolor='0.6')
+plt.grid(linewidth=0.2)
 plt.show()
